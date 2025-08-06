@@ -10,12 +10,14 @@ def parse_args():
     parser.add_argument("--version", action="version", version=f"{PROGRAM_NAME} - version {VERSION}")
 
     parser.add_argument(
+        "-v",
         "--video",
         required=True,
         help="Input video file, optionally with volume as file:volume (e.g. video.mp4:0.8). Volume is optional, default 1.0."
     )
 
     parser.add_argument(
+        "-a",
         "--audio",
         action="append",
         default=[],
@@ -66,6 +68,6 @@ def main() -> None:
     for i, track in enumerate(audio_tracks, 1):
         print(f"Audio {i}: {track['file']}, volume: {track['volume']}, delay: {track['delay']}")
     print(f"Output: {output_file}")
-    
+
 if __name__ == "__main__":
     main()
