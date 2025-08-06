@@ -5,7 +5,7 @@ PROGRAM_NAME = "Simple Video Mixer"
 VERSION = "0.0.1"
 
 
-def main() -> None:
+def parse_args():
     parser = argparse.ArgumentParser(description="Mix video and audio sources", add_help=True)
     parser.add_argument("--version", action="version", version=f"{PROGRAM_NAME} - version {VERSION}")
 
@@ -55,10 +55,17 @@ def main() -> None:
         base, ext = os.path.splitext(video_file)
         output_file = f"{base}-mixed{ext}"
 
+    return video_file, video_volume, audio_tracks, output_file
+
+
+def main() -> None:
+    video_file, video_volume, audio_tracks, output_file = parse_args()
+
     # For demonstration, print parsed arguments
     print(f"Video: {video_file}, volume: {video_volume}")
     for i, track in enumerate(audio_tracks, 1):
         print(f"Audio {i}: {track['file']}, volume: {track['volume']}, delay: {track['delay']}")
     print(f"Output: {output_file}")
+    
 if __name__ == "__main__":
     main()
