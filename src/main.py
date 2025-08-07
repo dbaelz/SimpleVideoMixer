@@ -1,5 +1,6 @@
 import argparse
 import os
+import subprocess
 
 
 PROGRAM_NAME = "Simple Video Mixer"
@@ -69,12 +70,60 @@ def parse_args():
 def main() -> None:
     video_file, video_volume, audio_tracks, output_file, verbose = parse_args()
 
-    # For demonstration, print parsed arguments
+    # Prepare ffmpeg input arguments
+    input_args = ['-i', video_file]
+    for track in audio_tracks:
+        input_args += ['-i', track['file']]
+
+    filter_parts = []
+    # Video audio (index 0)
+    filter_parts.append(f"[0:a]volume={video_volume}[a0]")
+    # Audio tracks (index 1...N)
+    for idx, track in enumerate(audio_tracks, 1):
+        delay_ms = int(track['delay'])
+        # adelay needs value for each channel, assume stereo (|)
+        adelay = f"adelay={delay_ms}|{delay_ms}" if delay_ms > 0 else ""
+        volume = f"volume={track['volume']}"
+        filters = []
+        if adelay:
+            filters.append(adelay)
+        filters.append(volume)
+        filter_str = ','.join(filters)
+        filter_parts.append(f"[{idx}:a]{filter_str}[a{idx}]")
+    # amix
+    amix_inputs = len(audio_tracks) + 1
+    amix_inputs_str = ''.join([f"[a{i}]" for i in range(amix_inputs)])
+    filter_parts.append(f"{amix_inputs_str}amix=inputs={amix_inputs}:normalize=0[aout]")
+    filter_complex = ';'.join(filter_parts)
+
+    # Build full ffmpeg command
+    cmd = [
+        'ffmpeg',
+        *input_args,
+        '-filter_complex', filter_complex,
+        '-map', '0:v',
+        '-map', '[aout]',
+        '-c:v', 'copy',
+        '-c:a', 'aac',
+        output_file
+    ]
+
     if verbose:
-        print(f"Video: {video_file}, volume: {video_volume}")
-        for i, track in enumerate(audio_tracks, 1):
-            print(f"Audio {i}: {track['file']}, volume: {track['volume']}, delay: {track['delay']}")
-        print(f"Output: {output_file}")
+        print('FFmpeg command:')
+        print(' '.join(cmd))
+
+    # Run ffmpeg
+    try:
+        result = subprocess.run(cmd, check=True, capture_output=not verbose, text=True)
+        print(f"Mixing completed: {output_file}")
+    except subprocess.CalledProcessError as e:
+        print("FFmpeg failed:")
+        if e.stdout:
+            print(e.stdout)
+        if e.stderr:
+            print(e.stderr)
+        print(f"Command: {' '.join(cmd)}")
+        exit(1)
 
 if __name__ == "__main__":
     main()
