@@ -1,4 +1,5 @@
 import argparse
+import os
 
 
 PROGRAM_NAME = "Simple Video Mixer"
@@ -29,6 +30,12 @@ def parse_args():
         help="Output file (default: input video filename with '-mixed' before extension)"
     )
 
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Print the ffmpeg command before running it."
+    )
+
     args = parser.parse_args()
 
     # Parse video argument (file[:volume])
@@ -50,24 +57,24 @@ def parse_args():
         })
 
     # Output file logic
-    import os
     if args.output:
         output_file = args.output
     else:
         base, ext = os.path.splitext(video_file)
         output_file = f"{base}-mixed{ext}"
 
-    return video_file, video_volume, audio_tracks, output_file
+    return video_file, video_volume, audio_tracks, output_file, args.verbose
 
 
 def main() -> None:
-    video_file, video_volume, audio_tracks, output_file = parse_args()
+    video_file, video_volume, audio_tracks, output_file, verbose = parse_args()
 
     # For demonstration, print parsed arguments
-    print(f"Video: {video_file}, volume: {video_volume}")
-    for i, track in enumerate(audio_tracks, 1):
-        print(f"Audio {i}: {track['file']}, volume: {track['volume']}, delay: {track['delay']}")
-    print(f"Output: {output_file}")
+    if verbose:
+        print(f"Video: {video_file}, volume: {video_volume}")
+        for i, track in enumerate(audio_tracks, 1):
+            print(f"Audio {i}: {track['file']}, volume: {track['volume']}, delay: {track['delay']}")
+        print(f"Output: {output_file}")
 
 if __name__ == "__main__":
     main()
