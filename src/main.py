@@ -21,9 +21,9 @@ def parse_args():
     parser.add_argument(
         "-a",
         "--audio",
-        action="append",
+        nargs='+',
         default=[],
-        help="Audio file(s) to mix, format: file[:volume[:delay]]. Can be used multiple times. Volume and delay are optional, default 1.0 and 0."
+        help="Audio file(s) to mix, format: file[:volume[:delay]]. You can specify multiple files after -a. Volume and delay are optional, default 1.0 and 0."
     )
 
     parser.add_argument(
@@ -46,7 +46,13 @@ def parse_args():
 
     # Parse audio arguments (file[:volume[:delay]])
     audio_tracks = []
-    for audio_spec in args.audio:
+    audio_args = []
+    for entry in args.audio:
+        if isinstance(entry, list):
+            audio_args.extend(entry)
+        else:
+            audio_args.append(entry)
+    for audio_spec in audio_args:
         parts = audio_spec.split(":")
         file = parts[0]
         volume = float(parts[1]) if len(parts) > 1 and parts[1] else 1.0
