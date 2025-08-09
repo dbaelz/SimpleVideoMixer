@@ -42,8 +42,7 @@ def parse_args():
     # Parse video argument (file[:volume])
     video_parts = args.video.split(":")
     video_file = video_parts[0]
-    video_volume = float(video_parts[1]) if len(video_parts) > 1 and video_parts[1] else 1.0
-
+    video_volume, _ = parse_volume_delay(video_parts[1] if len(video_parts) > 1 else None, None, "video")
     if not os.path.isfile(video_file):
         print(f"Error: Video file not found: {video_file}")
         exit(1)
@@ -53,8 +52,7 @@ def parse_args():
     for audio_spec in args.audio:
         parts = audio_spec.split(":")
         file = parts[0]
-        volume = float(parts[1]) if len(parts) > 1 and parts[1] else 1.0
-        delay = float(parts[2]) if len(parts) > 2 and parts[2] else 0.0
+        volume, delay = parse_volume_delay(parts[1] if len(parts) > 1 else None, parts[2] if len(parts) > 2 else None, file)
         if not os.path.isfile(file):
             print(f"Error: Audio file not found: {file}")
             exit(1)
@@ -72,6 +70,26 @@ def parse_args():
         output_file = f"{base}-mixed{ext}"
 
     return video_file, video_volume, audio_tracks, output_file, args.verbose
+
+def parse_volume_delay(volume_str, delay_str, file_label=""):
+    try:
+        volume = float(volume_str) if volume_str else 1.0
+    except ValueError:
+        print(f"Error: Invalid volume{f' for {file_label}' if file_label else ''}: {volume_str}")
+        exit(1)
+    if volume <= 0:
+        print(f"Error: Volume{f' for {file_label}' if file_label else ''} must be greater than 0 (got {volume})")
+        exit(1)
+    
+    try:
+        delay = float(delay_str) if delay_str else 0.0
+    except ValueError:
+        print(f"Error: Invalid delay{f' for {file_label}' if file_label else ''}: {delay_str}")
+        exit(1)
+    if delay < 0:
+        print(f"Error: Delay{f' for {file_label}' if file_label else ''} must be >= 0 (got {delay})")
+        exit(1)
+    return volume, delay
 
 
 def main() -> None:
