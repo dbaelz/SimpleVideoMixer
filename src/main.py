@@ -36,6 +36,11 @@ def parse_args():
         action="store_true",
         help="Print the ffmpeg command before running it."
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the ffmpeg command and exit without executing it."
+    )
 
     args = parser.parse_args()
 
@@ -69,7 +74,7 @@ def parse_args():
         base, ext = os.path.splitext(video_file)
         output_file = f"{base}-mixed{ext}"
 
-    return video_file, video_volume, audio_tracks, output_file, args.verbose
+    return video_file, video_volume, audio_tracks, output_file, args.verbose, args.dry_run
 
 def parse_volume_delay(volume_str, delay_str, file_label=""):
     try:
@@ -93,7 +98,7 @@ def parse_volume_delay(volume_str, delay_str, file_label=""):
 
 
 def main() -> None:
-    video_file, video_volume, audio_tracks, output_file, verbose = parse_args()
+    video_file, video_volume, audio_tracks, output_file, verbose, dry_run = parse_args()
 
     # Prepare ffmpeg input arguments
     input_args = ['-i', video_file]
@@ -133,9 +138,13 @@ def main() -> None:
         output_file
     ]
 
-    if verbose:
+    if verbose or dry_run:
         print('FFmpeg command:')
         print(' '.join(cmd))
+
+    if dry_run:
+        print("Dry run: ffmpeg command not executed.")
+        return
 
     # Run ffmpeg
     try:

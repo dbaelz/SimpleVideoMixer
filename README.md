@@ -11,6 +11,7 @@ A very simple command line tool to mix a video source with one or more audio sou
   - `-a audio1.mp3[:volume[:delay]] audio2.mp3[:volume[:delay]] ...` — specify one or more audio files, each with optional volume and delay (e.g. `audio1.mp3:0.5:2000`)
   - `-o output.mp4` — specify output file (default: input video filename with `-mixed` before the extension)
   - `--verbose` — print the ffmpeg command before running it
+  - `--dry-run` — print the ffmpeg command and exit without executing it
   - See `--help` for more information
 
 
