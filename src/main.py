@@ -44,6 +44,10 @@ def parse_args():
     video_file = video_parts[0]
     video_volume = float(video_parts[1]) if len(video_parts) > 1 and video_parts[1] else 1.0
 
+    if not os.path.isfile(video_file):
+        print(f"Error: Video file not found: {video_file}")
+        exit(1)
+
     # Parse audio arguments (file[:volume[:delay]])
     audio_tracks = []
     for audio_spec in args.audio:
@@ -51,6 +55,9 @@ def parse_args():
         file = parts[0]
         volume = float(parts[1]) if len(parts) > 1 and parts[1] else 1.0
         delay = float(parts[2]) if len(parts) > 2 and parts[2] else 0.0
+        if not os.path.isfile(file):
+            print(f"Error: Audio file not found: {file}")
+            exit(1)
         audio_tracks.append({
             "file": file,
             "volume": volume,
