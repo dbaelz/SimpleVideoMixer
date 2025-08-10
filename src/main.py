@@ -126,9 +126,11 @@ def main() -> None:
     filter_parts.append(f"{amix_inputs_str}amix=inputs={amix_inputs}:normalize=0[aout]")
     filter_complex = ';'.join(filter_parts)
 
+    loglevel = 'verbose' if verbose else 'warning'
     # Build full ffmpeg command
     cmd = [
         'ffmpeg',
+        '-loglevel', loglevel,
         *input_args,
         '-filter_complex', filter_complex,
         '-map', '0:v',
@@ -148,14 +150,10 @@ def main() -> None:
 
     # Run ffmpeg
     try:
-        result = subprocess.run(cmd, check=True, capture_output=not verbose, text=True)
+        result = subprocess.run(cmd, check=True)
         print(f"Mixing completed: {output_file}")
     except subprocess.CalledProcessError as e:
-        print("FFmpeg failed:")
-        if e.stdout:
-            print(e.stdout)
-        if e.stderr:
-            print(e.stderr)
+        print("FFmpeg failed.")
         print(f"Command: {' '.join(cmd)}")
         exit(1)
 
