@@ -4,6 +4,7 @@ import os
 PROGRAM_NAME = "Simple Video Mixer"
 VERSION = "0.0.1"
 
+_REPEAT_MODE_INF = "inf"
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Mix video and audio sources", add_help=True)
@@ -50,19 +51,36 @@ def parse_args():
         print(f"Error: Video file not found: {video_file}")
         exit(1)
 
-    # Parse audio arguments (file[:volume[:delay]])
+    # Parse audio arguments (file[:volume[:delay[:repeat]]])
     audio_tracks = []
     for audio_spec in args.audio:
         parts = audio_spec.split(":")
         file = parts[0]
         volume, delay = parse_volume_delay(parts[1] if len(parts) > 1 else None, parts[2] if len(parts) > 2 else None, file)
+        
+        repeat_str = parts[3] if len(parts) > 3 else None
+        repeat = 0
+        if repeat_str:
+            if repeat_str == _REPEAT_MODE_INF:
+                repeat = -1
+            else:
+                try:
+                    repeat = int(repeat_str)
+                except ValueError:
+                    print(f"Error: Invalid repeat for {file}: {repeat_str}")
+                    exit(1)
+                if repeat < 0:
+                    print(f"Error: Repeat for {file} must be >= 0 or '{_REPEAT_MODE_INF}' (got {repeat})")
+                    exit(1)
+        
         if not os.path.isfile(file):
             print(f"Error: Audio file not found: {file}")
             exit(1)
         audio_tracks.append({
             "file": file,
             "volume": volume,
-            "delay": delay
+            "delay": delay,
+            "repeat": repeat
         })
 
     # Output file logic
