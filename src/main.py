@@ -32,9 +32,11 @@ def main() -> None:
         requested_repeat = track.get('repeat', 0)
         if requested_repeat == -1:  # inf
             repeat = max_full_repeats
+        elif requested_repeat == 0:
+            repeat = 1 if max_full_repeats >= 1 else 0
         else:
             repeat = min(requested_repeat, max_full_repeats)
-        
+
         if repeat == 0:
             print(f"[WARN] Audio '{track['file']}' not added: repeat window too short for any full repeat.")
             continue
