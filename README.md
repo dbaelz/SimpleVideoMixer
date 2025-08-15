@@ -5,13 +5,13 @@ A very simple command line tool to mix a video source with one or more audio sou
 ## Features
 Mix a video file (mp4) with one or more audio files (mp3 or any ffmpeg-supported format).
 - Set the volume for the video audio track and for each audio file individually.
-- Set a delay (in milliseconds) for each audio file, specifying when it should start in the video.
+- Set a delay (in seconds, can be fractional) for each audio file, specifying when it should start in the video.
 - Repeat mode for audio tracks: repeat an audio file a specified number of times, or as many times as fits in the video (strict/full repeat, no cut audio).
 
 ### Arguments and syntax
-- Video: `-v video.mp4[:volume]` — specify video file and optional volume (e.g. `video.mp4:0.8` for 80% volume)
-- Audio: `audio.mp3[:volume[:delay[:repeat]]]` (e.g. `audio.mp3:1.2:5000:3`).
-  - It's possible to specify one or more audio files, each with optional volume, delay, and repeat
+- Video: `--video video.mp4[:volume]` — specify video file and optional volume (e.g. `video.mp4:0.8` for 80% volume)
+- Audio: `--audio audio.mp3[:volume[:delay[:repeat]]]` (e.g. `audio.mp3:1.2:5.5:3`).
+  - It's possible to specify one or more audio files, each with optional volume, delay (in seconds), and repeat
   - Use `inf` for infinite repeat (repeats as many full times as fit in the video)
 - `-o output.mp4` — specify output file (default: input video filename with `-mixed` before the extension)
 - `--verbose` — print the ffmpeg command before running it

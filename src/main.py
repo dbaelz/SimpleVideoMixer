@@ -22,7 +22,7 @@ def main() -> None:
             print(f"[WARN] Audio '{track['file']}' not added: could not determine duration or duration is zero.")
             continue
 
-        offset = track['delay'] / 1000.0  # delay is ms, convert to seconds
+        offset = track['delay']
         available = video_duration - offset
         if available < audio_duration:
             print(f"[WARN] Audio '{track['file']}' not added: repeat window too short for any full repeat.")
@@ -42,7 +42,7 @@ def main() -> None:
         if repeat > 1:
             input_args += ['-stream_loop', str(repeat-1)]
         input_args += ['-i', track['file']]
-        delay_ms = int(track['delay'])
+        delay_ms = int(track['delay'] * 1000)
         adelay = f"adelay={delay_ms}|{delay_ms}" if delay_ms > 0 else ""
         volume = f"volume={track['volume']}"
         filters = []
@@ -52,6 +52,7 @@ def main() -> None:
         filter_str = ','.join(filters)
         filter_parts.append(f"[{idx}:a]{filter_str}[a{idx}]")
         actual_audio_tracks.append(track)
+
     amix_inputs = len(actual_audio_tracks) + 1
     amix_inputs_str = ''.join([f"[a{i}]" for i in range(amix_inputs)])
     filter_parts.append(f"{amix_inputs_str}amix=inputs={amix_inputs}:normalize=0[aout]")
