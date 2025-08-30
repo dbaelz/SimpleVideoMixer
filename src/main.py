@@ -1,19 +1,31 @@
 import os
 import subprocess
 from typing import List, Dict, Tuple, Optional
-from cli import parse_args
 
+from audioTrack import AudioTrack
+from cli import parse_args
 from utils import get_media_duration, has_audio_stream
 
 def main() -> None:
-    video_file, video_volume, audio_tracks, output_file, verbose, dry_run = parse_args()
+    video_file, video_volume, audio_tracks_raw, output_file, verbose, dry_run = parse_args()
+    
+    # Convert audio_tracks_raw (list of dicts) to list of AudioTrack
+    audio_tracks: List[AudioTrack] = []
+    for track in audio_tracks_raw:
+        audio_tracks.append(AudioTrack(
+            file=track['file'],
+            volume=track.get('volume', 1.0),
+            delay=track.get('delay', 0.0),
+            repeat=track.get('repeat', 0)
+        ))
     video_duration = get_media_duration(video_file)
+
     if video_duration is None:
         print(f"[ERROR] Could not determine duration of video file: {video_file}")
         exit(1)
 
     video_has_audio = has_audio_stream(video_file)
-    audio_sources = collect_audio_sources(video_file, video_volume, video_has_audio, audio_tracks, video_duration)
+    audio_sources = collect_audio_sources(video_volume, video_has_audio, audio_tracks, video_duration)
     input_args = build_input_args(video_file, audio_sources)
     filter_complex, map_audio = build_filter_and_map(audio_sources)
 
@@ -42,10 +54,9 @@ def main() -> None:
         exit(1)
 
 def collect_audio_sources(
-    video_file: str,
     video_volume: float,
     video_has_audio: bool,
-    audio_tracks: List[Dict],
+    audio_tracks: List[AudioTrack],
     video_duration: float
 ) -> List[Dict]:
     sources = []
