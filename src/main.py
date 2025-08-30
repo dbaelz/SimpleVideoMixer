@@ -1,5 +1,7 @@
+
 import os
 import subprocess
+from typing import List, Dict, Tuple, Optional
 from cli import parse_args
 
 def main() -> None:
@@ -38,7 +40,13 @@ def main() -> None:
         print(f"Command: {' '.join(cmd)}")
         exit(1)
 
-def collect_audio_sources(video_file, video_volume, video_has_audio, audio_tracks, video_duration):
+def collect_audio_sources(
+    video_file: str,
+    video_volume: float,
+    video_has_audio: bool,
+    audio_tracks: List[Dict],
+    video_duration: float
+) -> List[Dict]:
     sources = []
     if video_has_audio:
         sources.append({
@@ -85,7 +93,7 @@ def collect_audio_sources(video_file, video_volume, video_has_audio, audio_track
         })
     return sources
 
-def build_input_args(video_file, audio_sources):
+def build_input_args(video_file: str, audio_sources: List[Dict]) -> List[str]:
     args = ['-i', video_file]
     for src in audio_sources:
         if src.get('type') == 'audio':
@@ -95,7 +103,7 @@ def build_input_args(video_file, audio_sources):
             args += ['-i', src['file']]
     return args
 
-def build_filter_and_map(audio_sources):
+def build_filter_and_map(audio_sources: List[Dict]) -> Tuple[Optional[str], Optional[str]]:
     if not audio_sources:
         return None, None
     filter_parts = [src['filter'] for src in audio_sources]
@@ -107,7 +115,7 @@ def build_filter_and_map(audio_sources):
     return ';'.join(filter_parts), '[aout]'
 
 
-def get_media_duration(filename):
+def get_media_duration(filename: str) -> Optional[float]:
     """Return duration in seconds as float, or None on error."""
     try:
         result = subprocess.run([
@@ -121,7 +129,7 @@ def get_media_duration(filename):
     except Exception:
         return None
 
-def has_audio_stream(file):
+def has_audio_stream(file: str) -> bool:
     try:
         result = subprocess.run([
             'ffprobe',
