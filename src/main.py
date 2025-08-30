@@ -1,8 +1,9 @@
-
 import os
 import subprocess
 from typing import List, Dict, Tuple, Optional
 from cli import parse_args
+
+from utils import get_media_duration, has_audio_stream
 
 def main() -> None:
     video_file, video_volume, audio_tracks, output_file, verbose, dry_run = parse_args()
@@ -113,35 +114,6 @@ def build_filter_and_map(audio_sources: List[Dict]) -> Tuple[Optional[str], Opti
     amix_inputs_str = ''.join([f"[{label}]" for label in labels])
     filter_parts.append(f"{amix_inputs_str}amix=inputs={len(labels)}:normalize=0[aout]")
     return ';'.join(filter_parts), '[aout]'
-
-
-def get_media_duration(filename: str) -> Optional[float]:
-    """Return duration in seconds as float, or None on error."""
-    try:
-        result = subprocess.run([
-            'ffprobe',
-            '-v', 'error',
-            '-show_entries', 'format=duration',
-            '-of', 'default=noprint_wrappers=1:nokey=1',
-            filename
-        ], capture_output=True, text=True, check=True)
-        return float(result.stdout.strip())
-    except Exception:
-        return None
-
-def has_audio_stream(file: str) -> bool:
-    try:
-        result = subprocess.run([
-            'ffprobe',
-            '-v', 'error',
-            '-select_streams', 'a',
-            '-show_entries', 'stream=index',
-            '-of', 'csv=p=0',
-            file
-        ], capture_output=True, text=True, check=True)
-        return bool(result.stdout.strip())
-    except Exception:
-        return False
 
 if __name__ == "__main__":
     main()
