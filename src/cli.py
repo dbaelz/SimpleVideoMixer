@@ -20,9 +20,9 @@ def parse_args():
     parser.add_argument(
         "-a",
         "--audio",
-        nargs='+',
+        action='append',
         default=[],
-        help="Audio file(s) to mix, format: file[:volume[:delay]]. You can specify multiple files after -a. Volume and delay are optional, default 1.0 and 0."
+        help="Audio file(s) to mix, format: file[:volume[:delay]]. You can specify multiple --audio flags. Volume and delay are optional, default 1.0 and 0."
     )
 
     parser.add_argument(
@@ -51,13 +51,20 @@ def parse_args():
         print(f"Error: Video file not found: {video_file}")
         exit(1)
 
+    # Flatten audio args in case multiple --audio flags are used
+    audio_specs = []
+    for entry in args.audio:
+        if isinstance(entry, list):
+            audio_specs.extend(entry)
+        else:
+            audio_specs.append(entry)
+
     # Parse audio arguments (file[:volume[:delay[:repeat]]])
     audio_tracks = []
-    for audio_spec in args.audio:
+    for audio_spec in audio_specs:
         parts = audio_spec.split(":")
         file = parts[0]
         volume, delay = parse_volume_delay(parts[1] if len(parts) > 1 else None, parts[2] if len(parts) > 2 else None, file)
-        
         repeat_str = parts[3] if len(parts) > 3 else None
         repeat = 0
         if repeat_str:
@@ -72,7 +79,6 @@ def parse_args():
                 if repeat < 0:
                     print(f"Error: Repeat for {file} must be >= 0 or '{_REPEAT_MODE_INF}' (got {repeat})")
                     exit(1)
-        
         if not os.path.isfile(file):
             print(f"Error: Audio file not found: {file}")
             exit(1)
