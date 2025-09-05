@@ -36,5 +36,6 @@ def plot_timeline(video: Tuple[str, float, int], audios: List[Tuple[str, float, 
 
     print(format_row(video_file, video_vol, '-', '-'))
 
-    for audio_file, audio_vol, offset, aud_dur, repeat in audios:
+    audios_sorted = sorted(audios, key=lambda x: x[2])
+    for audio_file, audio_vol, offset, _, repeat in audios_sorted:
         print(format_row(audio_file, audio_vol, offset, repeat))
