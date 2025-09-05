@@ -44,13 +44,14 @@ def main() -> None:
     # Plot
     video_plot = (video_file, video_volume, int(video_duration))
     audios_plot = []
-    for track in audio_tracks:
-        file = track['file']
-        volume = track['volume'] if isinstance(track, dict) else track.volume
-        delay = track['delay'] if isinstance(track, dict) else track.delay
-        repeat = track['repeat'] if isinstance(track, dict) else track.repeat
-        audio_dur = get_media_duration(file)
-        audios_plot.append((file, volume, delay, int(audio_dur) if audio_dur else 0, repeat if repeat != 0 else 1))
+    for idx, track in enumerate(audio_tracks):
+        # Use the original filename for display in the plot
+        orig_file = audio_tracks_raw[idx]['file'] if idx < len(audio_tracks_raw) else track['file']
+        volume = track['volume']
+        delay = track['delay']
+        repeat = track['repeat']
+        audio_dur = get_media_duration(track['file'])
+        audios_plot.append((orig_file, volume, delay, int(audio_dur) if audio_dur else 0, repeat if repeat != 0 else 1))
     plot_timeline(video_plot, audios_plot)
 
     video_has_audio = has_audio_stream(video_file)
