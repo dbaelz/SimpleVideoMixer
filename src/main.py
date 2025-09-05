@@ -4,11 +4,12 @@ from typing import List, Dict, Tuple, Optional
 
 from audioTrack import AudioTrack
 from cli import parse_args
+from plot import plot_timeline
 from utils import get_media_duration, has_audio_stream
 
 def main() -> None:
     video_file, video_volume, audio_tracks_raw, output_file, verbose, dry_run = parse_args()
-    
+
     # Convert audio_tracks_raw (list of dicts) to list of AudioTrack
     audio_tracks: List[AudioTrack] = []
     for track in audio_tracks_raw:
@@ -23,6 +24,25 @@ def main() -> None:
     if video_duration is None:
         print(f"[ERROR] Could not determine duration of video file: {video_file}")
         exit(1)
+
+    # Plot
+    video_plot = (video_file, video_volume, int(video_duration))
+    audios_plot = []
+    for track in audio_tracks:
+        # Support both AudioTrack object and dict
+        if isinstance(track, dict):
+            file = track['file']
+            volume = track.get('volume', 1.0)
+            delay = track.get('delay', 0.0)
+            repeat = track.get('repeat', 0)
+        else:
+            file = track.file
+            volume = track.volume
+            delay = track.delay
+            repeat = track.repeat
+        audio_dur = get_media_duration(file)
+        audios_plot.append((file, volume, delay, int(audio_dur) if audio_dur else 0, repeat if repeat != 0 else 1))
+    plot_timeline(video_plot, audios_plot)
 
     video_has_audio = has_audio_stream(video_file)
     audio_sources = collect_audio_sources(video_volume, video_has_audio, audio_tracks, video_duration)
