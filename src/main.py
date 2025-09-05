@@ -1,7 +1,9 @@
+import atexit
+from contextlib import suppress
 import os
 import shutil
-import tempfile
 import subprocess
+import tempfile
 from typing import List, Dict, Tuple, Optional
 
 from audioTrack import AudioTrack
@@ -14,7 +16,7 @@ def main() -> None:
 
     # Copy each audio file to a unique temp file
     temp_files = []
-    audio_tracks: List[AudioTrack] = []
+    audio_tracks: List[Dict] = []
     for idx, track in enumerate(audio_tracks_raw):
         orig_file = track['file']
         base, ext = os.path.splitext(os.path.basename(orig_file))
@@ -29,11 +31,9 @@ def main() -> None:
         })
     def cleanup_temp_files():
         for f in temp_files:
-            try:
+            with suppress(Exception):
                 os.remove(f)
-            except Exception:
-                pass
-    import atexit
+    
     atexit.register(cleanup_temp_files)
     video_duration = get_media_duration(video_file)
 
@@ -43,15 +43,16 @@ def main() -> None:
 
     # Plot
     video_plot = (video_file, video_volume, int(video_duration))
-    audios_plot = []
-    for idx, track in enumerate(audio_tracks):
-        # Use the original filename for display in the plot
-        orig_file = audio_tracks_raw[idx]['file'] if idx < len(audio_tracks_raw) else track['file']
-        volume = track['volume']
-        delay = track['delay']
-        repeat = track['repeat']
-        audio_dur = get_media_duration(track['file'])
-        audios_plot.append((orig_file, volume, delay, int(audio_dur) if audio_dur else 0, repeat if repeat != 0 else 1))
+    audios_plot = [
+        (
+            audio_tracks_raw[idx]['file'],
+            track['volume'],
+            track['delay'],
+            int(get_media_duration(track['file'])) if get_media_duration(track['file']) else 0,
+            track['repeat'] if track['repeat'] != 0 else 1
+        )
+        for idx, track in enumerate(audio_tracks)
+    ]
     plot_timeline(video_plot, audios_plot)
 
     video_has_audio = has_audio_stream(video_file)
