@@ -1,4 +1,6 @@
 import os
+import shutil
+import tempfile
 import subprocess
 from typing import List, Dict, Tuple, Optional
 
@@ -10,15 +12,29 @@ from utils import get_media_duration, has_audio_stream
 def main() -> None:
     video_file, video_volume, audio_tracks_raw, output_file, verbose, dry_run = parse_args()
 
-    # Convert audio_tracks_raw (list of dicts) to list of AudioTrack
+    # Copy each audio file to a unique temp file
+    temp_files = []
     audio_tracks: List[AudioTrack] = []
-    for track in audio_tracks_raw:
-        audio_tracks.append(AudioTrack(
-            file=track['file'],
-            volume=track.get('volume', 1.0),
-            delay=track.get('delay', 0.0),
-            repeat=track.get('repeat', 0)
-        ))
+    for idx, track in enumerate(audio_tracks_raw):
+        orig_file = track['file']
+        base, ext = os.path.splitext(os.path.basename(orig_file))
+        tmp_name = os.path.join(tempfile.gettempdir(), f"{base}_{idx}{ext}")
+        shutil.copy(orig_file, tmp_name)
+        temp_files.append(tmp_name)
+        audio_tracks.append({
+            'file': tmp_name,
+            'volume': track.get('volume', 1.0),
+            'delay': track.get('delay', 0.0),
+            'repeat': track.get('repeat', 0)
+        })
+    def cleanup_temp_files():
+        for f in temp_files:
+            try:
+                os.remove(f)
+            except Exception:
+                pass
+    import atexit
+    atexit.register(cleanup_temp_files)
     video_duration = get_media_duration(video_file)
 
     if video_duration is None:
@@ -29,17 +45,10 @@ def main() -> None:
     video_plot = (video_file, video_volume, int(video_duration))
     audios_plot = []
     for track in audio_tracks:
-        # Support both AudioTrack object and dict
-        if isinstance(track, dict):
-            file = track['file']
-            volume = track.get('volume', 1.0)
-            delay = track.get('delay', 0.0)
-            repeat = track.get('repeat', 0)
-        else:
-            file = track.file
-            volume = track.volume
-            delay = track.delay
-            repeat = track.repeat
+        file = track['file']
+        volume = track['volume'] if isinstance(track, dict) else track.volume
+        delay = track['delay'] if isinstance(track, dict) else track.delay
+        repeat = track['repeat'] if isinstance(track, dict) else track.repeat
         audio_dur = get_media_duration(file)
         audios_plot.append((file, volume, delay, int(audio_dur) if audio_dur else 0, repeat if repeat != 0 else 1))
     plot_timeline(video_plot, audios_plot)
