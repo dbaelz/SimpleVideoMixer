@@ -4,9 +4,9 @@ import os
 import shutil
 import subprocess
 import tempfile
-from typing import List, Dict, Tuple, Optional
+from typing import List, Tuple, Optional
 
-from audioTrack import AudioTrack
+from audio_models import AudioTrack, AudioSource, SourceType
 from cli import parse_args
 from plot import plot_timeline
 from utils import get_media_duration, has_audio_stream
@@ -16,7 +16,7 @@ def main() -> None:
 
     # Copy each audio file to a unique temp file
     temp_files = []
-    audio_tracks: List[Dict] = []
+    audio_tracks: List[AudioTrack] = []
     for idx, track in enumerate(audio_tracks_raw):
         orig_file = track['file']
         base, ext = os.path.splitext(os.path.basename(orig_file))
@@ -89,15 +89,15 @@ def collect_audio_sources(
     video_has_audio: bool,
     audio_tracks: List[AudioTrack],
     video_duration: float
-) -> List[Dict]:
-    sources = []
+) -> List[AudioSource]:
+    sources: List[AudioSource] = []
     if video_has_audio:
-        sources.append({
-            'input_idx': 0,
-            'filter': f"[0:a]volume={video_volume}[a0]",
-            'label': 'a0',
-            'type': 'video'
-        })
+        sources.append(AudioSource(
+            input_idx=0,
+            filter=f"[0:a]volume={video_volume}[a0]",
+            label='a0',
+            type=SourceType.VIDEO
+        ))
     # Audio tracks start at input 1 (video is always input 0)
     audio_input_start = 1
     for i, track in enumerate(audio_tracks):
@@ -126,31 +126,32 @@ def collect_audio_sources(
         adelay = f"adelay={delay_ms}|{delay_ms}" if delay_ms > 0 else ""
         volume = f"volume={track['volume']}"
         filters = ','.join(filter for filter in [adelay, volume] if filter)
-        sources.append({
-            'input_idx': audio_input_idx,
-            'filter': f"[{audio_input_idx}:a]{filters}[a{audio_input_idx}]",
-            'label': f"a{audio_input_idx}",
-            'type': 'audio',
-            'repeat': repeat,
-            'file': track['file']
-        })
+        sources.append(AudioSource(
+            input_idx=audio_input_idx,
+            filter=f"[{audio_input_idx}:a]{filters}[a{audio_input_idx}]",
+            label=f"a{audio_input_idx}",
+            type=SourceType.AUDIO,
+            repeat=repeat,
+            file=track['file']
+        ))
     return sources
 
-def build_input_args(video_file: str, audio_sources: List[Dict]) -> List[str]:
+def build_input_args(video_file: str, audio_sources: List[AudioSource]) -> List[str]:
     args = ['-i', video_file]
     for src in audio_sources:
-        if src.get('type') == 'audio':
-            repeat = src.get('repeat', 1)
+        if src.type == SourceType.AUDIO:
+            repeat = src.repeat if src.repeat is not None else 1
             if repeat > 1:
                 args += ['-stream_loop', str(repeat-1)]
-            args += ['-i', src['file']]
+            if src.file:
+                args += ['-i', src.file]
     return args
 
-def build_filter_and_map(audio_sources: List[Dict]) -> Tuple[Optional[str], Optional[str]]:
+def build_filter_and_map(audio_sources: List[AudioSource]) -> Tuple[Optional[str], Optional[str]]:
     if not audio_sources:
         return None, None
-    filter_parts = [src['filter'] for src in audio_sources]
-    labels = [src['label'] for src in audio_sources]
+    filter_parts = [src.filter for src in audio_sources]
+    labels = [src.label for src in audio_sources]
     if len(labels) == 1:
         return ';'.join(filter_parts), f"[{labels[0]}]"
     amix_inputs_str = ''.join([f"[{label}]" for label in labels])
