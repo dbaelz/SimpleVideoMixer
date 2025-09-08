@@ -1,12 +1,14 @@
 import argparse
 import os
 
+from audio_models import AudioTrack
+
 PROGRAM_NAME = "Simple Video Mixer"
 VERSION = "0.0.1"
 
 _REPEAT_MODE_INF = "inf"
 
-def parse_args():
+def parse_args() -> tuple[str, float, list[AudioTrack], str, bool, bool]:
     parser = argparse.ArgumentParser(description="Mix video and audio sources", add_help=True)
     parser.add_argument("--version", action="version", version=f"{PROGRAM_NAME} - version {VERSION}")
 
@@ -82,12 +84,12 @@ def parse_args():
         if not os.path.isfile(file):
             print(f"Error: Audio file not found: {file}")
             exit(1)
-        audio_tracks.append({
-            "file": file,
-            "volume": volume,
-            "delay": delay,
-            "repeat": repeat
-        })
+        audio_tracks.append(AudioTrack(
+            file=file,
+            volume=volume,
+            delay=delay,
+            repeat=repeat
+        ))
 
     # Output file logic
     if args.output:
