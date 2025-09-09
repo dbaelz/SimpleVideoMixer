@@ -2,10 +2,6 @@ import argparse
 import os
 import logging
 import sys
-logging.basicConfig(
-    level=logging.INFO,
-    format='[%(levelname)s] %(message)s'
-)
 
 from audio_models import AudioTrack
 
