@@ -4,6 +4,8 @@ import os
 import shutil
 import subprocess
 import tempfile
+import logging
+import sys
 from typing import List, Tuple, Optional
 
 from audio_models import AudioTrack, AudioSource, SourceType
@@ -11,6 +13,10 @@ from cli import parse_args
 from plot import VideoPlot, AudioPlot, plot_timeline
 from utils import get_media_duration, has_audio_stream
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(levelname)s] %(message)s'
+)
 
 def main() -> None:
     video_file, video_volume, audio_tracks_raw, output_file, verbose, dry_run = (
@@ -44,8 +50,8 @@ def main() -> None:
     video_duration = get_media_duration(video_file)
 
     if video_duration is None:
-        print(f"[ERROR] Could not determine duration of video file: {video_file}")
-        exit(1)
+        logging.error(f"Could not determine duration of video file: {video_file}")
+        sys.exit(1)
 
     # Plot
     plot_timeline(
@@ -85,19 +91,20 @@ def main() -> None:
     cmd += ["-c:v", "copy", output_file]
 
     if verbose or dry_run:
-        print("FFmpeg command:")
-        print(" ".join(cmd))
+        logging.info('FFmpeg command:')
+        logging.info(' '.join(cmd))
     if dry_run:
-        print("Dry run: ffmpeg command not executed.")
+        logging.info("Dry run: ffmpeg command not executed.")
         return
 
     try:
         subprocess.run(cmd, check=True)
-        print(f"Mixing completed: {output_file}")
+        print()
+        logging.info(f"✅ Mixing completed: {output_file}")
     except subprocess.CalledProcessError:
-        print("FFmpeg failed.")
-        print(f"Command: {' '.join(cmd)}")
-        exit(1)
+        logging.error("FFmpeg failed.")
+        logging.error(f"Command: {' '.join(cmd)}")
+        sys.exit(1)
 
 
 def collect_audio_sources(
@@ -122,16 +129,12 @@ def collect_audio_sources(
         audio_input_idx = audio_input_start + i
         audio_duration = get_media_duration(track["file"])
         if audio_duration is None or audio_duration == 0:
-            print(
-                f"[WARN] Audio '{track['file']}' not added: could not determine duration or duration is zero."
-            )
+            logging.warning(f"Audio '{track['file']}' not added: could not determine duration or duration is zero.")
             continue
         offset = track["delay"]
         available = video_duration - offset
         if available < audio_duration:
-            print(
-                f"[WARN] Audio '{track['file']}' not added: repeat window too short for any full repeat."
-            )
+            logging.warning(f"Audio '{track['file']}' not added: repeat window too short for any full repeat.")
             continue
         max_full_repeats = int(available // audio_duration)
         requested_repeat = track.get("repeat", 0)
@@ -142,9 +145,7 @@ def collect_audio_sources(
         else:
             repeat = min(requested_repeat, max_full_repeats)
         if repeat == 0:
-            print(
-                f"[WARN] Audio '{track['file']}' not added: repeat window too short for any full repeat."
-            )
+            logging.warning(f"Audio '{track['file']}' not added: repeat window too short for any full repeat.")
             continue
         delay_ms = int(track["delay"] * 1000)
         adelay = f"adelay={delay_ms}|{delay_ms}" if delay_ms > 0 else ""

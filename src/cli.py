@@ -1,5 +1,11 @@
 import argparse
 import os
+import logging
+import sys
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(levelname)s] %(message)s'
+)
 
 from audio_models import AudioTrack
 
@@ -50,8 +56,8 @@ def parse_args() -> tuple[str, float, list[AudioTrack], str, bool, bool]:
     video_file = video_parts[0]
     video_volume, _ = parse_volume_delay(video_parts[1] if len(video_parts) > 1 else None, None, "video")
     if not os.path.isfile(video_file):
-        print(f"Error: Video file not found: {video_file}")
-        exit(1)
+            logging.error(f"Video file not found: {video_file}")
+            sys.exit(1)
 
     # Flatten audio args in case multiple --audio flags are used
     audio_specs = []
@@ -76,14 +82,14 @@ def parse_args() -> tuple[str, float, list[AudioTrack], str, bool, bool]:
                 try:
                     repeat = int(repeat_str)
                 except ValueError:
-                    print(f"Error: Invalid repeat for {file}: {repeat_str}")
-                    exit(1)
+                        logging.error(f"Invalid repeat for {file}: {repeat_str}")
+                        sys.exit(1)
                 if repeat < 0:
-                    print(f"Error: Repeat for {file} must be >= 0 or '{_REPEAT_MODE_INF}' (got {repeat})")
-                    exit(1)
+                        logging.error(f"Repeat for {file} must be >= 0 or '{_REPEAT_MODE_INF}' (got {repeat})")
+                        sys.exit(1)
         if not os.path.isfile(file):
-            print(f"Error: Audio file not found: {file}")
-            exit(1)
+                logging.error(f"Audio file not found: {file}")
+                sys.exit(1)
         audio_tracks.append(AudioTrack(
             file=file,
             volume=volume,
@@ -105,18 +111,18 @@ def parse_volume_delay(volume_str, delay_str, file_label=""):
     try:
         volume = float(volume_str) if volume_str else 1.0
     except ValueError:
-        print(f"Error: Invalid volume{f' for {file_label}' if file_label else ''}: {volume_str}")
-        exit(1)
+            logging.error(f"Invalid volume{f' for {file_label}' if file_label else ''}: {volume_str}")
+            sys.exit(1)
     if volume <= 0:
-        print(f"Error: Volume{f' for {file_label}' if file_label else ''} must be greater than 0 (got {volume})")
-        exit(1)
+            logging.error(f"Volume{f' for {file_label}' if file_label else ''} must be greater than 0 (got {volume})")
+            sys.exit(1)
     
     try:
         delay = float(delay_str) if delay_str else 0.0
     except ValueError:
-        print(f"Error: Invalid delay{f' for {file_label}' if file_label else ''}: {delay_str}")
-        exit(1)
+            logging.error(f"Invalid delay{f' for {file_label}' if file_label else ''}: {delay_str}")
+            sys.exit(1)
     if delay < 0:
-        print(f"Error: Delay{f' for {file_label}' if file_label else ''} must be >= 0 (got {delay})")
-        exit(1)
+            logging.error(f"Delay{f' for {file_label}' if file_label else ''} must be >= 0 (got {delay})")
+            sys.exit(1)
     return volume, delay

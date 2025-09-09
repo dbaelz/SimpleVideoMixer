@@ -49,3 +49,4 @@ def plot_timeline(video: VideoPlot, audios: List[AudioPlot]):
     audios_sorted = sorted(audios, key=lambda x: x.delay)
     for audio in audios_sorted:
         print(format_row(audio.file, audio.volume, audio.delay, audio.repeat))
+    print()
