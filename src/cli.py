@@ -62,7 +62,7 @@ def parse_args() -> tuple[str, float, list[AudioTrack], str, bool, bool]:
             audio_specs.append(entry)
 
     # Parse audio arguments (file[:volume[:delay[:repeat]]])
-    audio_tracks = []
+    audio_tracks: list[AudioTrack] = []
     for audio_spec in audio_specs:
         parts = audio_spec.split(":")
         file = parts[0]
